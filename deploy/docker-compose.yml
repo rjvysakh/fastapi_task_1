@@ -1,0 +1,44 @@
+version: '3.9'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: ./deploy/Dockerfile
+      target: prod
+    image: fastapi_task_2:${FASTAPI_TASK_2_VERSION:-latest}
+    restart: always
+    env_file:
+    - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      FASTAPI_TASK_2_HOST: 0.0.0.0
+      FASTAPI_TASK_2_DB_HOST: localhost
+      FASTAPI_TASK_2_DB_PORT: 5432
+      FASTAPI_TASK_2_DB_USER: postgres
+      FASTAPI_TASK_2_DB_PASS: postgres
+      FASTAPI_TASK_2_DB_BASE: fastapi_db
+
+  db:
+    image: postgres:13.8-bullseye
+    hostname: localhost
+    environment:
+      POSTGRES_PASSWORD: "postgres"
+      POSTGRES_USER: "postgres"
+      POSTGRES_DB: "fastapi_db"
+    volumes:
+    - fastapi_task_2-db-data:/var/lib/postgresql/data
+    restart: always
+    healthcheck:
+      test: pg_isready -U fastapi_task_2
+      interval: 2s
+      timeout: 3s
+      retries: 40
+
+
+
+volumes:
+  fastapi_task_2-db-data:
+    name: fastapi_task_2-db-data
