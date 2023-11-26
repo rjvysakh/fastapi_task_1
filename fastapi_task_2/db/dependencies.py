@@ -1,20 +1,21 @@
-from typing import AsyncGenerator
+# database.py
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
-from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.requests import Request
+DATABASE_URL = "postgresql://postgres:postgres@localhost/fastapi_db"
+
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
-async def get_db_session(request: Request) -> AsyncGenerator[AsyncSession, None]:
+def get_db():
     """
-    Create and get database session.
+    Get a SQLAlchemy database session.
 
-    :param request: current request.
-    :yield: database session.
+    :yield: Database session
     """
-    session: AsyncSession = request.app.state.db_session_factory()
-
-    try:  # noqa: WPS501
-        yield session
+    db = SessionLocal()
+    try:
+        yield db
     finally:
-        await session.commit()
-        await session.close()
+        db.close()
